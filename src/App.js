@@ -10,13 +10,8 @@ function App() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Get the API URL from environment variable or use default
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-  // Generate a demo JWT token
-  const getToken = () => {
-    return 'demo-token'; // Simple token for demo purposes
-  };
+  // iTunes Search API URL
+  const ITUNES_API_URL = 'https://itunes.apple.com/search';
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -26,18 +21,13 @@ function App() {
     setLoading(true);
 
     try {
+      const mediaParam = mediaType === 'all' ? '' : `&media=${mediaType}`;
       const response = await fetch(
-        `${API_URL}/api/search?term=${encodeURIComponent(searchTerm)}&media=${mediaType}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${getToken()}`
-          }
-        }
+        `${ITUNES_API_URL}?term=${encodeURIComponent(searchTerm)}${mediaParam}&limit=20`
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || 'Failed to fetch search results');
+        throw new Error('Failed to fetch search results');
       }
 
       const data = await response.json();
