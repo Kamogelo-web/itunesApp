@@ -41,12 +41,21 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// API endpoint to fetch music data from iTunes
+// API endpoint to fetch data from iTunes
 app.get('/api/search', authenticateToken, async (req, res) => {
   const { term, media } = req.query;
-  if (!term) return res.status(400).json({ error: 'Search term is required' });
+  
+  if (!term) {
+    return res.status(400).json({ error: 'Search term is required' });
+  }
 
-  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=${media || 'music'}&limit=25`;
+  // Validate media type
+  const validMediaTypes = ['all', 'movie', 'podcast', 'music', 'audiobook', 'shortFilm', 'tvShow', 'software', 'ebook'];
+  if (media && !validMediaTypes.includes(media)) {
+    return res.status(400).json({ error: 'Invalid media type' });
+  }
+
+  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=${media || 'all'}&limit=25`;
   
   try {
     console.log('Fetching from iTunes API:', url);
@@ -57,8 +66,27 @@ app.get('/api/search', authenticateToken, async (req, res) => {
     }
     
     const data = await response.json();
-    console.log('iTunes API response:', data);
-    res.json(data);
+    
+    // Format the response data
+    const formattedResults = data.results.map(item => ({
+      trackId: item.trackId,
+      trackName: item.trackName,
+      artistName: item.artistName,
+      artworkUrl100: item.artworkUrl100,
+      releaseDate: item.releaseDate,
+      kind: item.kind,
+      wrapperType: item.wrapperType,
+      collectionName: item.collectionName,
+      trackPrice: item.trackPrice,
+      currency: item.currency,
+      description: item.description,
+      longDescription: item.longDescription
+    }));
+
+    res.json({
+      resultCount: formattedResults.length,
+      results: formattedResults
+    });
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).json({ 
@@ -70,7 +98,11 @@ app.get('/api/search', authenticateToken, async (req, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+  res.status(200).json({ 
+    status: 'ok',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Catch-all route to serve the React app
@@ -89,5 +121,5 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 }); 
