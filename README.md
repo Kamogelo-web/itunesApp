@@ -21,7 +21,7 @@ A React-based web application that allows users to search for content in the iTu
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/itunes-project.git
+git clone https://github.com/Kamogelo-web/itunes-project.git
 cd itunes-project
 ```
 
@@ -54,6 +54,9 @@ PORT=5000
   - Query parameters:
     - `term`: Search term
     - `media`: Media type (music, movie, podcast, etc.)
+   
+## Render link
+https://itunesapp.onrender.com
 
 ## License
 
