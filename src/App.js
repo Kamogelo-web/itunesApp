@@ -4,50 +4,68 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [mediaType, setMediaType] = useState('all');
-  const [searchResults, setSearchResults] = useState([]);
+  const [mediaType, setMediaType] = useState('music');
+  const [results, setResults] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Generate a simple JWT token for demo purposes
+  // Get the API URL from environment variable or use default
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+  // Generate a demo JWT token (in production, this should be handled by a proper auth system)
   const getToken = () => {
-    return 'demo-token'; // In a real app, this would be a proper JWT token
+    // For development, return a dummy token
+    if (process.env.NODE_ENV === 'development') {
+      return 'dummy-token';
+    }
+    // In production, you should implement proper JWT generation
+    return 'your-production-token';
   };
 
-  const handleSearch = async () => {
-    if (!searchTerm) return;
+  const handleSearch = async (e) => {
+    e.preventDefault();
     setError(null);
-    
-    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-    const url = `${API_URL}/api/search?term=${encodeURIComponent(searchTerm)}&media=${mediaType}`;
-    
+    setLoading(true);
+
     try {
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${getToken()}`
+      const response = await fetch(
+        `${API_URL}/api/search?term=${encodeURIComponent(searchTerm)}&media=${mediaType}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${getToken()}`
+          }
         }
-      });
-      
+      );
+
       if (!response.ok) {
-        throw new Error('Failed to fetch data');
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to fetch search results');
       }
-      
+
       const data = await response.json();
-      setSearchResults(data.results || []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setError('Failed to fetch search results. Please try again.');
+      setResults(data.results || []);
+    } catch (err) {
+      console.error('Search error:', err);
+      setError(err.message);
+      setResults([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const addToFavorites = (item) => {
-    if (!favorites.some(fav => fav.trackId === item.trackId)) {
-      setFavorites([...favorites, item]);
-    }
+  const toggleFavorite = (item) => {
+    setFavorites(prev => {
+      const exists = prev.find(fav => fav.trackId === item.trackId);
+      if (exists) {
+        return prev.filter(fav => fav.trackId !== item.trackId);
+      }
+      return [...prev, item];
+    });
   };
 
-  const removeFromFavorites = (trackId) => {
-    setFavorites(favorites.filter(item => item.trackId !== trackId));
+  const isFavorite = (item) => {
+    return favorites.some(fav => fav.trackId === item.trackId);
   };
 
   return (
@@ -69,15 +87,10 @@ function App() {
             value={mediaType}
             onChange={(e) => setMediaType(e.target.value)}
           >
-            <option value="all">All</option>
-            <option value="movie">Movie</option>
-            <option value="podcast">Podcast</option>
             <option value="music">Music</option>
-            <option value="audiobook">Audiobook</option>
-            <option value="shortFilm">Short Film</option>
-            <option value="tvShow">TV Show</option>
-            <option value="software">Software</option>
-            <option value="ebook">Ebook</option>
+            <option value="movie">Movies</option>
+            <option value="podcast">Podcasts</option>
+            <option value="audiobook">Audiobooks</option>
           </select>
         </div>
         <div className="col-md-2">
@@ -95,14 +108,19 @@ function App() {
         <div className="col-md-8">
           <h2>Search Results</h2>
           <div className="row">
-            {searchResults.map((item) => (
+            {results.map((item) => (
               <div key={item.trackId} className="col-md-4 mb-3">
                 <div className="card">
                   <img src={item.artworkUrl100} className="card-img-top" alt={item.trackName} />
                   <div className="card-body">
                     <h5 className="card-title">{item.trackName}</h5>
                     <p className="card-text">{item.artistName}</p>
-                    <button className="btn btn-sm btn-success" onClick={() => addToFavorites(item)}>Add to Favorites</button>
+                    <button
+                      onClick={() => toggleFavorite(item)}
+                      className={isFavorite(item) ? 'btn btn-sm btn-success active' : 'btn btn-sm btn-success'}
+                    >
+                      {isFavorite(item) ? '★' : '☆'}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -115,7 +133,12 @@ function App() {
             {favorites.map((item) => (
               <li key={item.trackId} className="list-group-item d-flex justify-content-between align-items-center">
                 {item.trackName}
-                <button className="btn btn-sm btn-danger" onClick={() => removeFromFavorites(item.trackId)}>Remove</button>
+                <button
+                  onClick={() => toggleFavorite(item)}
+                  className="btn btn-sm btn-danger"
+                >
+                  ★
+                </button>
               </li>
             ))}
           </ul>
