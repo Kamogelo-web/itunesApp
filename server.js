@@ -41,6 +41,20 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Login endpoint
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+
+  // For demo purposes, using a simple hardcoded check
+  // In a real application, you would validate against a database
+  if (username === 'demo' && password === 'demo123') {
+    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token });
+  } else {
+    res.status(401).json({ error: 'Invalid credentials' });
+  }
+});
+
 // API endpoint to fetch data from iTunes
 app.get('/api/search', authenticateToken, async (req, res) => {
   const { term, media } = req.query;
