@@ -21,7 +21,7 @@ function App() {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
+      const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ function App() {
   };
 
   // iTunes Search API URL
-  const ITUNES_API_URL = 'http://localhost:5000/api/search';
+  const ITUNES_API_URL = '/api/search';
 
   const handleSearch = async (e) => {
     e.preventDefault();
