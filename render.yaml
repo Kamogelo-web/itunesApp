@@ -3,9 +3,7 @@ services:
     name: itunes-search-app
     env: node
     rootDir: .
-    buildCommand: |
-      npm ci
-      npm run build
+    buildCommand: npm run build
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
